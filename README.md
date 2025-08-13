@@ -459,3 +459,362 @@ const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Movie library app listening on port ${PORT}`);
 });
+
+
+
+
+*************************************************************************************
+EJS
+1.Movies-gallery
+movie-gallery/
+│ app.js
+│ package.json
+└── views/
+│    ├── layout.ejs
+│    └── index.ejs
+└── public/
+     └── styles.css
+npm init -y
+npm install express ejs
+node app.js
+++++++++++++++++++++++++++++++     
+app.js
+const express = require('express');
+const path = require('path');
+
+const app = express();
+
+// Set EJS view engine
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+// Serve static CSS files
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Movie data
+const movies = [
+  { title: 'The Shawshank Redemption', rating: 9.3 },
+  { title: 'The Godfather', rating: 9.2 },
+  { title: 'Inception', rating: 8.8 },
+  { title: 'Interstellar', rating: 8.6 },
+  { title: 'The Dark Knight', rating: 9.0 },
+  { title: 'Jumanji', rating: 6.9 },
+  { title: 'Avengers: Endgame', rating: 8.4 },
+  { title: 'Frozen', rating: 7.5 }
+];
+
+// Routes
+app.get('/', (req, res) => {
+  res.render('index', { movies });
+});
+
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+*********************************layout.ejs
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Movie Gallery</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+
+<header>
+  <h1>My Movie Gallery</h1>
+</header>
+
+<main>
+  <%- body %>
+</main>
+
+<footer>
+  <p>&copy; 2025 Movie Gallery. All rights reserved.</p>
+</footer>
+
+</body>
+</html>
+**********************************index.ejs
+<% movies.forEach(movie => { %>
+  <div class="card <%= movie.rating > 8 ? 'highlight' : '' %>">
+    <h2><%= movie.title %></h2>
+    <p>Rating: <%= movie.rating %></p>
+  </div>
+<% }) %>
+***************************************sytle.css
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f4f4f4;
+}
+
+header, footer {
+  background: #333;
+  color: white;
+  text-align: center;
+  padding: 1rem 0;
+}
+
+main {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 15px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.highlight {
+  border-left: 5px solid #ff5722;
+  background-color: #fff3e0;
+}
+
+----------------------------------------------*************------------------------
+2.REceipe-page
+recipe-app/
+│
+├── app.js
+├── views/
+│   └── recipe.pug       node.app.js
+├── public/
+│   ├── styles.css
+│   └── images/
+│       └── recipe.jpg
+
+app.js
+const express = require('express');
+const path = require('path');
+
+const app = express();
+
+// Set Pug as the view engine
+app.set('view engine', 'pug');
+app.set('views', path.join(__dirname, 'views'));
+
+// Static files
+app.use('/assets', express.static(path.join(__dirname, 'public')));
+
+// Sample recipe data
+const recipe = {
+  name: 'Spaghetti Aglio e Olio',
+  ingredients: [
+    { name: 'Spaghetti', highlight: false },
+    { name: 'Garlic', highlight: true },
+    { name: 'Olive Oil', highlight: true },
+    { name: 'Chili Flakes', highlight: false },
+    { name: 'Parsley', highlight: false },
+    { name: 'Salt', highlight: false }
+  ],
+  steps: [
+    'Boil spaghetti in salted water until al dente.',
+    'Heat olive oil in a pan, add garlic and chili flakes.',
+    'Drain pasta and toss with the garlic oil.',
+    'Add parsley and adjust seasoning.',
+    'Serve hot.'
+  ]
+};
+
+app.get('/', (req, res) => {
+  res.render('recipe', { recipe });
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Recipe app running at http://localhost:${PORT}`);
+});
+-----------------------------*********   views/recipe.pug
+doctype html
+html
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport" content="width=device-width, initial-scale=1.0")
+    title= recipe.name
+    link(rel="stylesheet", href="/assets/styles.css")
+  body
+    header
+      h1= recipe.name
+    main
+      img(src="/assets/images/recipe.jpg", alt=recipe.name)
+      
+      h2 Ingredients
+      ul
+        each ingredient in recipe.ingredients
+          li(style= ingredient.highlight ? 'color: red; font-weight: bold;' : '') #{ingredient.name}
+
+      h2 Steps
+      ol
+        each step in recipe.steps
+          li= step
+    footer
+      p &copy; 2025 My Recipe App
+------------------------------------**************public/style.css
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background: #f4f4f4;
+}
+
+header, footer {
+  background: #333;
+  color: white;
+  text-align: center;
+  padding: 1rem;
+}
+
+main {
+  padding: 20px;
+  max-width: 600px;
+  margin: auto;
+  background: white;
+  border-radius: 8px;
+}
+
+img {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+ul, ol {
+  padding-left: 20px;
+}
+-----------------------------------------------------------------------------------
+3-Feedback.form
+travel-feedback/
+│── app.js
+│── views/
+│    ├── form.ejs
+│    └── result.ejs
+│── uploads/
+│── public/
+│    └── styles.css
+│── package.json
+-----------------------------app.js
+const express = require('express');
+const multer = require('multer');
+const path = require('path');
+
+const app = express();
+
+// Static files
+app.use(express.static(path.join(__dirname, 'public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// EJS
+app.set('view engine', 'ejs');
+
+// Multer storage
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage });
+
+// Routes
+app.get('/', (req, res) => {
+  res.render('form');
+});
+
+app.post('/submit', upload.single('screenshot'), (req, res) => {
+  const { name, email } = req.body;
+  const imagePath = `/uploads/${req.file.filename}`;
+  res.render('result', { name, email, imagePath });
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+-----------------------------------views/form.ejs
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Travel Feedback Form</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>Travel Website Feedback</h1>
+  <form action="/submit" method="POST" enctype="multipart/form-data">
+    <label>Name:</label>
+    <input type="text" name="name" required>
+
+    <label>Email:</label>
+    <input type="email" name="email" required>
+
+    <label>Screenshot of Issue:</label>
+    <input type="file" name="screenshot" accept="image/*" required>
+
+    <button type="submit">Submit Feedback</button>
+  </form>
+</body>
+</html>
+-------------------------------views/result.ejs
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Feedback Submitted</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <h1>Thank You for Your Feedback!</h1>
+  <p><strong>Name:</strong> <%= name %></p>
+  <p><strong>Email:</strong> <%= email %></p>
+  <h2>Screenshot:</h2>
+  <img src="<%= imagePath %>" alt="Screenshot" style="max-width:300px;">
+</body>
+</html>
+----------------------------public/style.css
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f4;
+  padding: 20px;
+}
+
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+}
+
+label {
+  display: block;
+  margin-top: 10px;
+}
+
+input, button {
+  width: 100%;
+  padding: 8px;
+  margin-top: 5px;
+}
+
+button {
+  background: #28a745;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #218838;
+}
+----------------------------------------************----------------------------------
