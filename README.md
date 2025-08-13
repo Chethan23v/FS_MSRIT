@@ -817,4 +817,186 @@ button {
 button:hover {
   background: #218838;
 }
-----------------------------------------************----------------------------------
+----------------------------------------************---------------------------------
+
+**cookies**
+npm init -y
+npm install express express-session cookie-parser ejs
+01-student-login-portal.js           node.js
+
+const express = require('express');
+const session = require('express-session');
+const cookieParser = require('cookie-parser');
+
+const app = express();
+const PORT = 3000;
+
+const students = {}; 
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
+app.use(
+  session({
+    secret: 'student-secret-key',
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false },
+  })
+);
+
+app.post('/register', (req, res) => {
+  const { rollNo, name, password } = req.body;
+
+  if (!rollNo || !name || !password) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+
+  if (students[rollNo]) {
+    return res.status(409).json({ message: 'Student already exists.' });
+  }
+
+  students[rollNo] = { name, password };
+  res.status(201).json({ message: 'Student registered successfully.' });
+});
+
+app.post('/login', (req, res) => {
+  const { rollNo, password } = req.body;
+  const student = students[rollNo];
+
+  if (!student || student.password !== password) {
+    return res.status(401).json({ message: 'Invalid roll number or password.' });
+  }
+
+  req.session.student = { rollNo, name: student.name };
+
+  res.cookie('studentPortalAccess', rollNo, {
+    maxAge: 3 * 60 * 1000, 
+    httpOnly: true,
+  });
+
+  res.json({ message: 'Login successful.' });
+});
+
+function isAuthenticated(req, res, next) {
+  if (req.session.student) {
+    return next();
+  }
+  return res.status(401).json({ message: 'Unauthorized. Please login.' });
+}
+
+app.get('/dashboard', isAuthenticated, (req, res) => {
+  res.json({
+    message: `Welcome ${req.session.student.name}`,
+    rollNo: req.session.student.rollNo,
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
+});
+---------------------------------**********----------------------------------------
+02-protected-route.js
+const express = require('express');
+const session = require('express-session');
+const app = express();
+
+app.use(express.json());
+
+app.use(session({
+  secret: 'your-secret-key',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false }
+}));
+
+app.post('/login', (req, res) => {
+  const { name } = req.body;
+  if (!name) return res.status(400).send('Please provide your name');
+
+  req.session.student = { name };
+  res.send(`Logged in as ${name}`);
+});
+
+app.get('/results', (req, res) => {
+  if (req.session.student && req.session.student.name) {
+    res.send(`Hi ${req.session.student.name}, your results are available!`);
+  } else {
+    res.status(401).send('Access denied: Please login to view results');
+  }
+});
+
+app.get('/logout', (req, res) => {
+  req.session.destroy(err => {
+    if (err) {
+      return res.status(500).send('Error logging out');
+    }
+    res.clearCookie('connect.sid');
+    res.send('Logged out successfully');
+  });
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+------------------------------------***********--------------------------------------
+03-course-enrollment.js
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const app = express();
+
+app.use(express.json());
+app.use(cookieParser());
+
+const courses = [
+  { id: 'c1', name: 'Math 101' },
+  { id: 'c2', name: 'Physics 101' },
+  { id: 'c3', name: 'History 101' }
+];
+
+const enrolledByUser = {};
+
+function authMiddleware(req, res, next) {
+  const userId = req.headers['x-user-id'];
+  if (!userId) {
+    return res.status(401).json({ error: 'Not logged in' });
+  }
+  req.userId = userId;
+  if (!enrolledByUser[userId]) enrolledByUser[userId] = [];
+  next();
+}
+
+app.get('/courses', authMiddleware, (req, res) => {
+  res.json(courses);
+});
+
+app.post('/courses', authMiddleware, (req, res) => {
+  const userId = req.userId;
+  const { courseId } = req.body;
+
+  if (!courseId) {
+    return res.status(400).json({ error: 'courseId is required' });
+  }
+
+  const course = courses.find(c => c.id === courseId);
+  if (!course) {
+    return res.status(404).json({ error: 'Course not found' });
+  }
+
+  if (enrolledByUser[userId].includes(courseId)) {
+    return res.status(400).json({ error: 'Already enrolled in this course' });
+  }
+
+  enrolledByUser[userId].push(courseId);
+
+  res.cookie('lastEnrolledCourse', courseId, { maxAge: 2 * 60 * 1000, httpOnly: true });
+
+  res.json({ message: `Enrolled in ${course.name} successfully!` });
+});
+
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Server listening on http://localhost:${PORT}`);
+});
+-----------------------------------------*************************-----------------
